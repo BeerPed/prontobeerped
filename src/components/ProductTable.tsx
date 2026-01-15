@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, Package, Smartphone, Filter } from "lucide-react";
+import { Search, Package, Smartphone, Filter, Plus, Loader2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -8,7 +8,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { products } from "@/data/products";
+import { Button } from "@/components/ui/button";
+import { useProducts } from "@/hooks/useProducts";
+import { useCart } from "@/contexts/CartContext";
+import { products as staticProducts } from "@/data/products";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("pt-BR", {
@@ -21,16 +24,31 @@ export function ProductTable() {
   const [searchTerm, setSearchTerm] = useState("");
   const [brandFilter, setBrandFilter] = useState<string>("todas");
   const [typeFilter, setTypeFilter] = useState<string>("todos");
+  
+  const { data: dbProducts, isLoading } = useProducts();
+  const { addToCart } = useCart();
+
+  // Use database products if available, otherwise fallback to static
+  const products = useMemo(() => {
+    if (dbProducts && dbProducts.length > 0) {
+      return dbProducts;
+    }
+    // Convert static products to match database format
+    return staticProducts.map((p) => ({
+      ...p,
+      id: p.id.toString(),
+    }));
+  }, [dbProducts]);
 
   const brands = useMemo(() => {
     const uniqueBrands = [...new Set(products.map((p) => p.marca))];
     return uniqueBrands.sort();
-  }, []);
+  }, [products]);
 
   const types = useMemo(() => {
     const uniqueTypes = [...new Set(products.map((p) => p.tipo))];
     return uniqueTypes.sort();
-  }, []);
+  }, [products]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -47,7 +65,15 @@ export function ProductTable() {
 
       return matchesSearch && matchesBrand && matchesType;
     });
-  }, [searchTerm, brandFilter, typeFilter]);
+  }, [products, searchTerm, brandFilter, typeFilter]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -121,7 +147,7 @@ export function ProductTable() {
                 typeFilter === type
                   ? "bg-primary text-primary-foreground shadow-md"
                   : "bg-muted hover:bg-muted/80 text-foreground"
-              }`}
+            }`}
             >
               {type}
             </button>
@@ -144,12 +170,13 @@ export function ProductTable() {
               <TableHead className="text-[hsl(var(--table-header-foreground))] font-semibold">Marca</TableHead>
               <TableHead className="text-[hsl(var(--table-header-foreground))] font-semibold hidden sm:table-cell">Tipo</TableHead>
               <TableHead className="text-[hsl(var(--table-header-foreground))] font-semibold text-right">Preço</TableHead>
+              <TableHead className="text-[hsl(var(--table-header-foreground))] font-semibold w-16"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredProducts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-12 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
                   <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p>Nenhum produto encontrado</p>
                 </TableCell>
@@ -164,6 +191,17 @@ export function ProductTable() {
                   <TableCell>{product.marca}</TableCell>
                   <TableCell className="hidden sm:table-cell text-muted-foreground">{product.tipo}</TableCell>
                   <TableCell className="text-right font-semibold text-primary">{formatCurrency(product.preco)}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => addToCart(product)}
+                      title="Adicionar ao pedido"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             )}
