@@ -8,13 +8,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { products } from "@/data/products";
 
 const formatCurrency = (value: number) => {
@@ -58,48 +51,81 @@ export function ProductTable() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Buscar por modelo, marca ou tipo..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input pl-10"
-          />
+      {/* Campo de busca */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        <input
+          type="text"
+          placeholder="Buscar por modelo, marca ou tipo..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="search-input pl-10"
+        />
+      </div>
+
+      {/* Filtro de Marcas - Horizontal */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <Smartphone className="h-4 w-4" />
+          <span>Marca</span>
         </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setBrandFilter("todas")}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              brandFilter === "todas"
+                ? "bg-primary text-primary-foreground shadow-md"
+                : "bg-muted hover:bg-muted/80 text-foreground"
+            }`}
+          >
+            Todas
+          </button>
+          {brands.map((brand) => (
+            <button
+              key={brand}
+              onClick={() => setBrandFilter(brand)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                brandFilter === brand
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "bg-muted hover:bg-muted/80 text-foreground"
+              }`}
+            >
+              {brand}
+            </button>
+          ))}
+        </div>
+      </div>
 
-        <div className="flex gap-3">
-          <Select value={brandFilter} onValueChange={setBrandFilter}>
-            <SelectTrigger className="w-[140px] bg-card">
-              <Smartphone className="h-4 w-4 mr-2 text-muted-foreground" />
-              <SelectValue placeholder="Marca" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas</SelectItem>
-              {brands.map((brand) => (
-                <SelectItem key={brand} value={brand}>
-                  {brand}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[140px] bg-card">
-              <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
-              <SelectValue placeholder="Tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos</SelectItem>
-              {types.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* Filtro de Tipos - Horizontal */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <Filter className="h-4 w-4" />
+          <span>Tipo</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setTypeFilter("todos")}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              typeFilter === "todos"
+                ? "bg-primary text-primary-foreground shadow-md"
+                : "bg-muted hover:bg-muted/80 text-foreground"
+            }`}
+          >
+            Todos
+          </button>
+          {types.map((type) => (
+            <button
+              key={type}
+              onClick={() => setTypeFilter(type)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                typeFilter === type
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "bg-muted hover:bg-muted/80 text-foreground"
+              }`}
+            >
+              {type}
+            </button>
+          ))}
         </div>
       </div>
 
