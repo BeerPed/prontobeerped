@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,6 +11,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Send } from "lucide-react";
+
+const STORAGE_KEY = "arcell-customer-info";
 
 export interface CustomerInfo {
   nome: string;
@@ -25,19 +27,40 @@ interface CustomerRegistrationDialogProps {
   onSubmit: (customerInfo: CustomerInfo) => void;
 }
 
+const loadSavedCustomerInfo = (): CustomerInfo => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error("Error loading customer info:", e);
+  }
+  return { nome: "", telefone: "", endereco: "", loja: "" };
+};
+
+const saveCustomerInfo = (info: CustomerInfo) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(info));
+  } catch (e) {
+    console.error("Error saving customer info:", e);
+  }
+};
+
 export function CustomerRegistrationDialog({
   open,
   onOpenChange,
   onSubmit,
 }: CustomerRegistrationDialogProps) {
-  const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
-    nome: "",
-    telefone: "",
-    endereco: "",
-    loja: "",
-  });
+  const [customerInfo, setCustomerInfo] = useState<CustomerInfo>(loadSavedCustomerInfo);
 
   const [errors, setErrors] = useState<Partial<CustomerInfo>>({});
+
+  useEffect(() => {
+    if (open) {
+      setCustomerInfo(loadSavedCustomerInfo());
+    }
+  }, [open]);
 
   const validateForm = () => {
     const newErrors: Partial<CustomerInfo> = {};
@@ -62,6 +85,7 @@ export function CustomerRegistrationDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
+      saveCustomerInfo(customerInfo);
       onSubmit(customerInfo);
     }
   };
