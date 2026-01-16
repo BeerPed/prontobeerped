@@ -5,6 +5,13 @@ export interface CartItem extends Product {
   quantity: number;
 }
 
+export interface CustomerInfo {
+  nome: string;
+  telefone: string;
+  endereco: string;
+  loja: string;
+}
+
 interface CartContextType {
   items: CartItem[];
   addToCart: (product: Product) => void;
@@ -13,7 +20,7 @@ interface CartContextType {
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
-  getWhatsAppMessage: () => string;
+  getWhatsAppMessage: (customerInfo: CustomerInfo) => string;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -66,10 +73,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }).format(value);
   };
 
-  const getWhatsAppMessage = () => {
+  const getWhatsAppMessage = (customerInfo: CustomerInfo) => {
     if (items.length === 0) return "";
 
     let message = "🛒 *Pedido AR Cell Distribuidora*\n\n";
+    
+    message += "👤 *Dados do Cliente:*\n";
+    message += "─────────────────\n";
+    message += `📛 Nome: ${customerInfo.nome}\n`;
+    message += `📱 Telefone: ${customerInfo.telefone}\n`;
+    message += `📍 Endereço: ${customerInfo.endereco}\n`;
+    message += `🏪 Loja: ${customerInfo.loja}\n\n`;
+    
     message += "📋 *Itens do pedido:*\n";
     message += "─────────────────\n";
 

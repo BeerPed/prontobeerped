@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ShoppingCart, Trash2, Plus, Minus, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +11,10 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import { useCart } from "@/contexts/CartContext";
+import {
+  CustomerRegistrationDialog,
+  CustomerInfo,
+} from "@/components/CustomerRegistrationDialog";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("pt-BR", {
@@ -19,6 +24,7 @@ const formatCurrency = (value: number) => {
 };
 
 export function CartButton() {
+  const [showRegistration, setShowRegistration] = useState(false);
   const {
     items,
     removeFromCart,
@@ -29,10 +35,12 @@ export function CartButton() {
     getWhatsAppMessage,
   } = useCart();
 
-  const handleSendWhatsApp = () => {
-    const message = getWhatsAppMessage();
+  const handleSendWhatsApp = (customerInfo: CustomerInfo) => {
+    const message = getWhatsAppMessage(customerInfo);
     const phoneNumber = "5511946698650";
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, "_blank");
+    setShowRegistration(false);
+    clearCart();
   };
 
   return (
@@ -137,15 +145,21 @@ export function CartButton() {
               </Button>
               <Button
                 className="flex-1 gap-2 bg-green-600 hover:bg-green-700"
-                onClick={handleSendWhatsApp}
+                onClick={() => setShowRegistration(true)}
               >
                 <Send className="h-4 w-4" />
-                Enviar WhatsApp
+                Finalizar Pedido
               </Button>
             </div>
           </SheetFooter>
         )}
       </SheetContent>
+
+      <CustomerRegistrationDialog
+        open={showRegistration}
+        onOpenChange={setShowRegistration}
+        onSubmit={handleSendWhatsApp}
+      />
     </Sheet>
   );
 }
