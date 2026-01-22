@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, Package, Smartphone, Filter, Plus, Loader2, ChevronLeft, ChevronRight, SlidersHorizontal, X } from "lucide-react";
+import { Search, Package, Smartphone, Filter, Plus, Loader2, ChevronLeft, ChevronRight, SlidersHorizontal, X, Image } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -49,6 +49,7 @@ export function ProductTable() {
     return staticProducts.map((p) => ({
       ...p,
       id: p.id.toString(),
+      image_url: null as string | null,
     }));
   }, [dbProducts]);
 
@@ -262,6 +263,7 @@ export function ProductTable() {
         <Table>
           <TableHeader>
             <TableRow className="bg-[hsl(var(--table-header))] hover:bg-[hsl(var(--table-header))]">
+              <TableHead className="text-[hsl(var(--table-header-foreground))] font-semibold w-16 hidden sm:table-cell">Imagem</TableHead>
               <TableHead className="text-[hsl(var(--table-header-foreground))] font-semibold">Modelo</TableHead>
               <TableHead className="text-[hsl(var(--table-header-foreground))] font-semibold hidden sm:table-cell">Marca</TableHead>
               <TableHead className="text-[hsl(var(--table-header-foreground))] font-semibold hidden md:table-cell">Tipo</TableHead>
@@ -272,7 +274,7 @@ export function ProductTable() {
           <TableBody>
             {paginatedProducts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
                   <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p>Nenhum produto encontrado</p>
                 </TableCell>
@@ -283,6 +285,19 @@ export function ProductTable() {
                   key={product.id}
                   className={`transition-colors hover:bg-[hsl(var(--table-row-hover))] ${index % 2 === 1 ? "bg-[hsl(var(--table-row-alt))]" : ""}`}
                 >
+                  <TableCell className="hidden sm:table-cell">
+                    {product.image_url ? (
+                      <img
+                        src={product.image_url}
+                        alt={product.modelo}
+                        className="h-10 w-10 object-cover rounded"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 bg-muted rounded flex items-center justify-center">
+                        <Image className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell className="font-medium">
                     <div>
                       <span>{product.modelo}</span>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash2, LogOut, Loader2, Search, Home } from "lucide-react";
+import { Plus, Pencil, Trash2, LogOut, Loader2, Search, Home, Upload, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,6 +40,9 @@ import {
   type ProductInsert,
 } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
+import { ProductImportDialog } from "@/components/admin/ProductImportDialog";
+import { ProductExportButton } from "@/components/admin/ProductExportButton";
+import { ProductImageUpload } from "@/components/admin/ProductImageUpload";
 import logo from "@/assets/logo.png";
 
 const formatCurrency = (value: number) => {
@@ -54,6 +57,7 @@ type ProductFormData = {
   marca: string;
   tipo: string;
   preco: string;
+  image_url: string | null;
 };
 
 const emptyForm: ProductFormData = {
@@ -61,6 +65,7 @@ const emptyForm: ProductFormData = {
   marca: "",
   tipo: "",
   preco: "",
+  image_url: null,
 };
 
 export default function Admin() {
@@ -75,6 +80,7 @@ export default function Admin() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
@@ -119,6 +125,7 @@ export default function Admin() {
       marca: product.marca,
       tipo: product.tipo,
       preco: product.preco.toString(),
+      image_url: product.image_url || null,
     });
     setIsFormOpen(true);
   };
@@ -136,6 +143,7 @@ export default function Admin() {
       marca: formData.marca,
       tipo: formData.tipo,
       preco: parseFloat(formData.preco.replace(",", ".")),
+      image_url: formData.image_url,
     };
 
     if (editingProduct) {
@@ -208,10 +216,17 @@ export default function Admin() {
               className="pl-9"
             />
           </div>
-          <Button onClick={handleOpenCreate}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Produto
-          </Button>
+          <div className="flex gap-2">
+            <ProductExportButton />
+            <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+              <Upload className="h-4 w-4 mr-2" />
+              Importar CSV
+            </Button>
+            <Button onClick={handleOpenCreate}>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Produto
+            </Button>
+          </div>
         </div>
 
         {/* Products Table */}
@@ -224,6 +239,7 @@ export default function Admin() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
+                  <TableHead className="w-16">Imagem</TableHead>
                   <TableHead>Modelo</TableHead>
                   <TableHead>Marca</TableHead>
                   <TableHead className="hidden sm:table-cell">Tipo</TableHead>
@@ -234,13 +250,26 @@ export default function Admin() {
               <TableBody>
                 {filteredProducts?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
                       Nenhum produto encontrado
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredProducts?.map((product) => (
                     <TableRow key={product.id}>
+                      <TableCell>
+                        {product.image_url ? (
+                          <img
+                            src={product.image_url}
+                            alt={product.modelo}
+                            className="h-10 w-10 object-cover rounded"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 bg-muted rounded flex items-center justify-center">
+                            <Image className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell className="font-medium">{product.modelo}</TableCell>
                       <TableCell>{product.marca}</TableCell>
                       <TableCell className="hidden sm:table-cell text-muted-foreground">
@@ -297,6 +326,13 @@ export default function Admin() {
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Imagem do Produto</Label>
+                <ProductImageUpload
+                  currentImageUrl={formData.image_url}
+                  onImageChange={(url) => setFormData({ ...formData, image_url: url })}
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="modelo">Modelo</Label>
                 <Input
@@ -397,6 +433,9 @@ export default function Admin() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Import Dialog */}
+      <ProductImportDialog open={isImportOpen} onOpenChange={setIsImportOpen} />
     </div>
   );
 }
