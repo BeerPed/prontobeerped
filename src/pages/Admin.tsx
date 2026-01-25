@@ -43,6 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ProductImportDialog } from "@/components/admin/ProductImportDialog";
 import { ProductExportButton } from "@/components/admin/ProductExportButton";
 import { ProductImageUpload } from "@/components/admin/ProductImageUpload";
+import { EditableProductTable } from "@/components/admin/EditableProductTable";
 import logo from "@/assets/logo.png";
 
 const formatCurrency = (value: number) => {
@@ -231,79 +232,11 @@ export default function Admin() {
 
         {/* Products Table */}
         <div className="bg-card rounded-lg border border-border overflow-hidden">
-          {productsLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="w-16">Imagem</TableHead>
-                  <TableHead>Modelo</TableHead>
-                  <TableHead>Marca</TableHead>
-                  <TableHead className="hidden sm:table-cell">Tipo</TableHead>
-                  <TableHead className="text-right">Preço</TableHead>
-                  <TableHead className="text-right w-24">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProducts?.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
-                      Nenhum produto encontrado
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredProducts?.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell>
-                        {product.image_url ? (
-                          <img
-                            src={product.image_url}
-                            alt={product.modelo}
-                            className="h-10 w-10 object-cover rounded"
-                          />
-                        ) : (
-                          <div className="h-10 w-10 bg-muted rounded flex items-center justify-center">
-                            <Image className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-medium">{product.modelo}</TableCell>
-                      <TableCell>{product.marca}</TableCell>
-                      <TableCell className="hidden sm:table-cell text-muted-foreground">
-                        {product.tipo}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold text-primary">
-                        {formatCurrency(product.preco)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleOpenEdit(product)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => handleOpenDelete(product)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          )}
+          <EditableProductTable
+            products={filteredProducts || []}
+            isLoading={productsLoading}
+            onOpenCreate={handleOpenCreate}
+          />
         </div>
 
         <p className="text-sm text-muted-foreground mt-4">
