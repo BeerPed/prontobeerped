@@ -3,6 +3,7 @@ import { Footer } from "@/components/Footer";
 import { ProductTable } from "@/components/ProductTable";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import logo from "@/assets/logo.png";
+import logoWatermark from "@/assets/logo-watermark.png";
 
 const Index = () => {
   return (
@@ -16,9 +17,9 @@ const Index = () => {
           aria-hidden="true"
         >
           <img 
-            src={logo} 
+            src={logoWatermark} 
             alt="" 
-            className="w-[60%] max-w-lg h-auto"
+            className="w-[70%] max-w-xl h-auto"
           />
         </div>
         
