@@ -19,6 +19,7 @@ import {
 import { useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/contexts/CartContext";
 import { products as staticProducts } from "@/data/products";
+import logoWatermark from "@/assets/logo-watermark.png";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("pt-BR", {
@@ -259,7 +260,20 @@ export function ProductTable() {
         </div>
       </div>
 
-      <div className="table-container">
+      <div className="table-container relative">
+        {/* Watermark overlay para proteção contra cópias */}
+        <div 
+          className="absolute inset-0 pointer-events-none flex items-center justify-center z-10"
+          aria-hidden="true"
+          style={{
+            backgroundImage: `url(${logoWatermark})`,
+            backgroundRepeat: 'repeat',
+            backgroundSize: '200px auto',
+            backgroundPosition: 'center',
+            opacity: 0.06,
+          }}
+        />
+        
         <Table>
           <TableHeader>
             <TableRow className="bg-[hsl(var(--table-header))] hover:bg-[hsl(var(--table-header))]">
