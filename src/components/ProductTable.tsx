@@ -20,6 +20,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/contexts/CartContext";
 import { products as staticProducts } from "@/data/products";
 import logoWatermark from "@/assets/logo-watermark.png";
+import { BrandIcon } from "@/components/BrandIcon";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("pt-BR", {
@@ -187,12 +188,13 @@ export function ProductTable() {
                 <button
                   key={brand}
                   onClick={() => setBrandFilter(brand)}
-                  className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
+                  className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 ${
                     brandFilter === brand
                       ? "bg-primary text-primary-foreground shadow-md"
                       : "bg-background hover:bg-muted text-foreground border"
                   }`}
                 >
+                  <BrandIcon brand={brand} size="sm" />
                   {brand}
                 </button>
               ))}
@@ -313,14 +315,22 @@ export function ProductTable() {
                     )}
                   </TableCell>
                   <TableCell className="font-medium">
-                    <div>
-                      <span>{product.modelo}</span>
-                      <span className="block sm:hidden text-xs text-muted-foreground mt-0.5">
-                        {product.marca}
-                      </span>
+                    <div className="flex items-center gap-2">
+                      <BrandIcon brand={product.marca} />
+                      <div>
+                        <span>{product.modelo}</span>
+                        <span className="block sm:hidden text-xs text-muted-foreground mt-0.5">
+                          {product.marca}
+                        </span>
+                      </div>
                     </div>
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell">{product.marca}</TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    <div className="flex items-center gap-2">
+                      <BrandIcon brand={product.marca} />
+                      <span>{product.marca}</span>
+                    </div>
+                  </TableCell>
                   <TableCell className="hidden md:table-cell text-muted-foreground">{product.tipo}</TableCell>
                   <TableCell className="text-right font-semibold text-primary whitespace-nowrap">{product.preco != null ? formatCurrency(product.preco) : "—"}</TableCell>
                   <TableCell className="p-2">
