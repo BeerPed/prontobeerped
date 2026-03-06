@@ -314,14 +314,22 @@ export function ProductTable() {
                     )}
                   </TableCell>
                   <TableCell className="font-medium">
-                    <div>
-                      <span>{product.modelo}</span>
-                      <span className="block sm:hidden text-xs text-muted-foreground mt-0.5">
-                        {product.marca}
-                      </span>
+                    <div className="flex items-center gap-2">
+                      <BrandIcon brand={product.marca} />
+                      <div>
+                        <span>{product.modelo}</span>
+                        <span className="block sm:hidden text-xs text-muted-foreground mt-0.5">
+                          {product.marca}
+                        </span>
+                      </div>
                     </div>
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell">{product.marca}</TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    <div className="flex items-center gap-2">
+                      <BrandIcon brand={product.marca} />
+                      <span>{product.marca}</span>
+                    </div>
+                  </TableCell>
                   <TableCell className="hidden md:table-cell text-muted-foreground">{product.tipo}</TableCell>
                   <TableCell className="text-right font-semibold text-primary whitespace-nowrap">{product.preco != null ? formatCurrency(product.preco) : "—"}</TableCell>
                   <TableCell className="p-2">
