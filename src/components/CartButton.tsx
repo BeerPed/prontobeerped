@@ -85,7 +85,7 @@ export function CartButton() {
                     {item.marca} • {item.tipo}
                   </p>
                   <p className="text-sm font-semibold text-primary mt-1">
-                    {formatCurrency(item.preco)}
+                    {item.preco != null ? formatCurrency(item.preco) : "—"}
                   </p>
                 </div>
                 <Button
@@ -121,7 +121,7 @@ export function CartButton() {
                   </Button>
                 </div>
                 <span className="text-sm font-semibold">
-                  {formatCurrency(item.preco * item.quantity)}
+                  {item.preco != null ? formatCurrency(item.preco * item.quantity) : "—"}
                 </span>
               </div>
             </div>
