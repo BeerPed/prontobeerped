@@ -3,7 +3,7 @@ export interface Product {
   modelo: string;
   marca: string;
   tipo: string;
-  preco: number;
+  preco: number | null;
 }
 
 export const products: Product[] = [
