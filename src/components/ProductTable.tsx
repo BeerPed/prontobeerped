@@ -20,6 +20,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/contexts/CartContext";
 import { products as staticProducts } from "@/data/products";
 import logoWatermark from "@/assets/logo-watermark.png";
+import { BrandIcon } from "@/components/BrandIcon";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("pt-BR", {
