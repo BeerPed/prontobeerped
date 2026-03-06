@@ -188,12 +188,13 @@ export function ProductTable() {
                 <button
                   key={brand}
                   onClick={() => setBrandFilter(brand)}
-                  className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
+                  className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 ${
                     brandFilter === brand
                       ? "bg-primary text-primary-foreground shadow-md"
                       : "bg-background hover:bg-muted text-foreground border"
                   }`}
                 >
+                  <BrandIcon brand={brand} size="sm" />
                   {brand}
                 </button>
               ))}
