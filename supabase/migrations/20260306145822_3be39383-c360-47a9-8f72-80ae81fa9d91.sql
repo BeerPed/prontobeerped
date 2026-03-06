@@ -1,0 +1,1 @@
+ALTER TABLE public.products ALTER COLUMN preco DROP NOT NULL;

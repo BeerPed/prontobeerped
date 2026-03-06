@@ -63,7 +63,7 @@ export function EditableProductTable({
       modelo: product.modelo,
       marca: product.marca,
       tipo: product.tipo,
-      preco: product.preco.toString(),
+      preco: product.preco != null ? product.preco.toString() : "",
     });
   };
 
@@ -80,7 +80,7 @@ export function EditableProductTable({
       modelo: editData.modelo,
       marca: editData.marca,
       tipo: editData.tipo,
-      preco: parseFloat(editData.preco.replace(",", ".")),
+      preco: editData.preco ? parseFloat(editData.preco.replace(",", ".")) : null,
     });
 
     setEditingId(null);
@@ -222,7 +222,7 @@ export function EditableProductTable({
                         />
                       ) : (
                         <span className="font-semibold text-primary">
-                          {formatCurrency(product.preco)}
+                          {product.preco != null ? formatCurrency(product.preco) : "—"}
                         </span>
                       )}
                     </TableCell>

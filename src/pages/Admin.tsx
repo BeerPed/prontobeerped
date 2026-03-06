@@ -125,7 +125,7 @@ export default function Admin() {
       modelo: product.modelo,
       marca: product.marca,
       tipo: product.tipo,
-      preco: product.preco.toString(),
+      preco: product.preco != null ? product.preco.toString() : "",
       image_url: product.image_url || null,
     });
     setIsFormOpen(true);
@@ -143,7 +143,7 @@ export default function Admin() {
       modelo: formData.modelo,
       marca: formData.marca,
       tipo: formData.tipo,
-      preco: parseFloat(formData.preco.replace(",", ".")),
+      preco: formData.preco ? parseFloat(formData.preco.replace(",", ".")) : null,
       image_url: formData.image_url,
     };
 

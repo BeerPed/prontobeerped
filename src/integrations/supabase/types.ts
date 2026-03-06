@@ -21,7 +21,7 @@ export type Database = {
           image_url: string | null
           marca: string
           modelo: string
-          preco: number
+          preco: number | null
           tipo: string
           updated_at: string | null
         }
@@ -31,7 +31,7 @@ export type Database = {
           image_url?: string | null
           marca: string
           modelo: string
-          preco: number
+          preco?: number | null
           tipo: string
           updated_at?: string | null
         }
@@ -41,7 +41,7 @@ export type Database = {
           image_url?: string | null
           marca?: string
           modelo?: string
-          preco?: number
+          preco?: number | null
           tipo?: string
           updated_at?: string | null
         }

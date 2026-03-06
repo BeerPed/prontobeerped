@@ -25,7 +25,7 @@ export function ProductExportButton() {
       `"${p.modelo.replace(/"/g, '""')}"`,
       `"${p.marca.replace(/"/g, '""')}"`,
       `"${p.tipo.replace(/"/g, '""')}"`,
-      p.preco.toFixed(2).replace(".", ","),
+      p.preco != null ? p.preco.toFixed(2).replace(".", ",") : "",
     ]);
 
     // Combine headers and rows

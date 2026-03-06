@@ -7,7 +7,7 @@ export interface Product {
   modelo: string;
   marca: string;
   tipo: string;
-  preco: number;
+  preco: number | null;
   image_url?: string | null;
   created_at?: string;
   updated_at?: string;

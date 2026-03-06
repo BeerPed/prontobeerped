@@ -62,7 +62,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = items.reduce(
-    (sum, item) => sum + item.preco * item.quantity,
+    (sum, item) => sum + (item.preco ?? 0) * item.quantity,
     0
   );
 
@@ -92,8 +92,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       message += `${index + 1}. *${item.modelo}*\n`;
       message += `   Marca: ${item.marca}\n`;
       message += `   Tipo: ${item.tipo}\n`;
-      message += `   Qtd: ${item.quantity} x ${formatCurrency(item.preco)}\n`;
-      message += `   Subtotal: ${formatCurrency(item.preco * item.quantity)}\n\n`;
+      message += `   Qtd: ${item.quantity} x ${item.preco != null ? formatCurrency(item.preco) : "—"}\n`;
+      message += `   Subtotal: ${item.preco != null ? formatCurrency(item.preco * item.quantity) : "—"}\n\n`;
     });
 
     message += "─────────────────\n";
