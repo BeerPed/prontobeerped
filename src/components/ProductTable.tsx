@@ -322,7 +322,7 @@ export function ProductTable() {
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">{product.marca}</TableCell>
                   <TableCell className="hidden md:table-cell text-muted-foreground">{product.tipo}</TableCell>
-                  <TableCell className="text-right font-semibold text-primary whitespace-nowrap">{formatCurrency(product.preco)}</TableCell>
+                  <TableCell className="text-right font-semibold text-primary whitespace-nowrap">{product.preco != null ? formatCurrency(product.preco) : "—"}</TableCell>
                   <TableCell className="p-2">
                     <Button
                       variant="ghost"
