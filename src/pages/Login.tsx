@@ -225,6 +225,7 @@ export default function Login() {
           </Link>
         </div>
       </Card>
+      </div>
     </div>
   );
 }
