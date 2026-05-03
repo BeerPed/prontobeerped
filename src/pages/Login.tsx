@@ -8,7 +8,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import logo from "@/assets/logo.png";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
+import defaultLogo from "@/assets/logo.png";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -18,6 +19,9 @@ export default function Login() {
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { data: settings } = useSiteSettings();
+  const logo = settings?.logo_url || defaultLogo;
+  const bgImage = settings?.login_bg_url;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,8 +69,18 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen grid md:grid-cols-2 bg-background">
+      <div className="hidden md:block relative bg-muted">
+        {bgImage ? (
+          <img src={bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/30">
+            <img src={logo} alt="" className="w-48 opacity-30" />
+          </div>
+        )}
+      </div>
+      <div className="flex items-center justify-center p-4">
+        <Card className="w-full max-w-md border-0 md:border shadow-none md:shadow-sm">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
             <img src={logo} alt="AR Cell" className="h-16 w-auto" />
