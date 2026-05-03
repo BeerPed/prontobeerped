@@ -15,6 +15,7 @@ import {
   CustomerRegistrationDialog,
   CustomerInfo,
 } from "@/components/CustomerRegistrationDialog";
+import { recordOrderForLead } from "@/hooks/useLeads";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("pt-BR", {
@@ -35,9 +36,20 @@ export function CartButton() {
     getWhatsAppMessage,
   } = useCart();
 
-  const handleSendWhatsApp = (customerInfo: CustomerInfo) => {
+  const handleSendWhatsApp = async (customerInfo: CustomerInfo) => {
     const message = getWhatsAppMessage(customerInfo);
     const phoneNumber = "5511946698650";
+    try {
+      await recordOrderForLead(customerInfo.telefone, {
+        total: totalPrice,
+        itens: items.map((i) => ({
+          modelo: i.modelo, marca: i.marca, tipo: i.tipo,
+          qtd: i.quantity, preco: i.preco,
+        })),
+      });
+    } catch (e) {
+      console.error("Failed to record order for lead", e);
+    }
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, "_blank");
     setShowRegistration(false);
     clearCart();

@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      leads: {
+        Row: {
+          created_at: string
+          endereco: string | null
+          id: string
+          loja: string | null
+          nome: string
+          notas: string | null
+          status: Database["public"]["Enums"]["lead_status"]
+          telefone: string
+          total_pedidos: number
+          ultimo_pedido_at: string | null
+          ultimo_pedido_itens: Json | null
+          ultimo_pedido_total: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          endereco?: string | null
+          id?: string
+          loja?: string | null
+          nome: string
+          notas?: string | null
+          status?: Database["public"]["Enums"]["lead_status"]
+          telefone: string
+          total_pedidos?: number
+          ultimo_pedido_at?: string | null
+          ultimo_pedido_itens?: Json | null
+          ultimo_pedido_total?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          endereco?: string | null
+          id?: string
+          loja?: string | null
+          nome?: string
+          notas?: string | null
+          status?: Database["public"]["Enums"]["lead_status"]
+          telefone?: string
+          total_pedidos?: number
+          ultimo_pedido_at?: string | null
+          ultimo_pedido_itens?: Json | null
+          ultimo_pedido_total?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           created_at: string | null
@@ -44,6 +92,27 @@ export type Database = {
           preco?: number | null
           tipo?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      site_settings: {
+        Row: {
+          id: string
+          login_bg_url: string | null
+          logo_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          login_bg_url?: string | null
+          logo_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          login_bg_url?: string | null
+          logo_url?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -83,6 +152,12 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      lead_status:
+        | "novo"
+        | "contatado"
+        | "brinde_enviado"
+        | "cliente_fiel"
+        | "inativo"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -211,6 +286,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      lead_status: [
+        "novo",
+        "contatado",
+        "brinde_enviado",
+        "cliente_fiel",
+        "inativo",
+      ],
     },
   },
 } as const

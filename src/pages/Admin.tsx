@@ -44,7 +44,11 @@ import { ProductImportDialog } from "@/components/admin/ProductImportDialog";
 import { ProductExportButton } from "@/components/admin/ProductExportButton";
 import { ProductImageUpload } from "@/components/admin/ProductImageUpload";
 import { EditableProductTable } from "@/components/admin/EditableProductTable";
-import logo from "@/assets/logo.png";
+import { AdminSettings } from "@/components/admin/AdminSettings";
+import { AdminLeads } from "@/components/admin/AdminLeads";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
+import defaultLogo from "@/assets/logo.png";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("pt-BR", {
@@ -75,6 +79,8 @@ export default function Admin() {
   const { toast } = useToast();
 
   const { data: products, isLoading: productsLoading } = useProducts();
+  const { data: siteSettings } = useSiteSettings();
+  const logo = siteSettings?.logo_url || defaultLogo;
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
@@ -206,42 +212,56 @@ export default function Admin() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
-        {/* Actions Bar */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar produtos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <div className="flex gap-2">
-            <ProductExportButton />
-            <Button variant="outline" onClick={() => setIsImportOpen(true)}>
-              <Upload className="h-4 w-4 mr-2" />
-              Importar CSV
-            </Button>
-            <Button onClick={handleOpenCreate}>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Produto
-            </Button>
-          </div>
-        </div>
+        <Tabs defaultValue="produtos">
+          <TabsList>
+            <TabsTrigger value="produtos">Produtos</TabsTrigger>
+            <TabsTrigger value="crm">CRM / Leads</TabsTrigger>
+            <TabsTrigger value="config">Configurações</TabsTrigger>
+          </TabsList>
 
-        {/* Products Table */}
-        <div className="bg-card rounded-lg border border-border overflow-hidden">
-          <EditableProductTable
-            products={filteredProducts || []}
-            isLoading={productsLoading}
-            onOpenCreate={handleOpenCreate}
-          />
-        </div>
+          <TabsContent value="produtos" className="space-y-4 mt-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar produtos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <div className="flex gap-2">
+                <ProductExportButton />
+                <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Importar CSV
+                </Button>
+                <Button onClick={handleOpenCreate}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Novo Produto
+                </Button>
+              </div>
+            </div>
+            <div className="bg-card rounded-lg border border-border overflow-hidden">
+              <EditableProductTable
+                products={filteredProducts || []}
+                isLoading={productsLoading}
+                onOpenCreate={handleOpenCreate}
+              />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {filteredProducts?.length ?? 0} produto(s) encontrado(s)
+            </p>
+          </TabsContent>
 
-        <p className="text-sm text-muted-foreground mt-4">
-          {filteredProducts?.length ?? 0} produto(s) encontrado(s)
-        </p>
+          <TabsContent value="crm" className="mt-4">
+            <AdminLeads />
+          </TabsContent>
+
+          <TabsContent value="config" className="mt-4">
+            <AdminSettings />
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Product Form Dialog */}

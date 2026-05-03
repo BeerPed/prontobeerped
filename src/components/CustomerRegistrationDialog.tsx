@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Send } from "lucide-react";
+import { upsertLeadByPhone } from "@/hooks/useLeads";
 
 const STORAGE_KEY = "arcell-customer-info";
 
@@ -82,10 +83,20 @@ export function CustomerRegistrationDialog({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
       saveCustomerInfo(customerInfo);
+      try {
+        await upsertLeadByPhone({
+          nome: customerInfo.nome,
+          telefone: customerInfo.telefone,
+          endereco: customerInfo.endereco,
+          loja: customerInfo.loja,
+        });
+      } catch (err) {
+        console.error("Failed to save lead", err);
+      }
       onSubmit(customerInfo);
     }
   };

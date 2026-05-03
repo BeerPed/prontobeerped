@@ -1,18 +1,21 @@
 import { Link } from "react-router-dom";
 import { Settings } from "lucide-react";
-import logo from "@/assets/logo.png";
+import defaultLogo from "@/assets/logo.png";
 import { CartButton } from "@/components/CartButton";
 import { Button } from "@/components/ui/button";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 export function Header() {
+  const { data: settings } = useSiteSettings();
+  const logo = settings?.logo_url || defaultLogo;
   return (
     <header className="bg-card border-b border-border shadow-sm sticky top-0 z-10">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img 
-              src={logo} 
-              alt="AR Cell Distribuidora" 
+            <img
+              src={logo}
+              alt="AR Cell Distribuidora"
               className="h-14 w-auto"
             />
             <div>
