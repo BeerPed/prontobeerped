@@ -1,180 +1,118 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash2, LogOut, Loader2, Search, Home, Upload, Image } from "lucide-react";
+import { Plus, LogOut, Loader2, Search, Home, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  useProducts,
-  useCreateProduct,
-  useUpdateProduct,
-  useDeleteProduct,
-  type Product,
-  type ProductInsert,
+  useProducts, useCreateProduct, useUpdateProduct,
+  CATEGORIAS, type Product, type ProductInsert, type Categoria,
 } from "@/hooks/useProducts";
 import { useToast } from "@/hooks/use-toast";
-import { ProductImportDialog } from "@/components/admin/ProductImportDialog";
 import { ProductExportButton } from "@/components/admin/ProductExportButton";
 import { ProductImageUpload } from "@/components/admin/ProductImageUpload";
 import { EditableProductTable } from "@/components/admin/EditableProductTable";
 import { AdminSettings } from "@/components/admin/AdminSettings";
 import { AdminLeads } from "@/components/admin/AdminLeads";
+import { AdminDeliveries } from "@/components/admin/AdminDeliveries";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
-import defaultLogo from "@/assets/logo.png";
+import defaultLogo from "@/assets/logo-pronto.png";
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
-};
-
-type ProductFormData = {
-  modelo: string;
-  marca: string;
-  tipo: string;
-  preco: string;
+type FormData = {
+  nome: string;
+  codigo: string;
+  custo: string;
+  categoria: Categoria;
+  gelavel: boolean;
+  ativo: boolean;
   image_url: string | null;
 };
 
-const emptyForm: ProductFormData = {
-  modelo: "",
-  marca: "",
-  tipo: "",
-  preco: "",
-  image_url: null,
+const emptyForm: FormData = {
+  nome: "", codigo: "", custo: "", categoria: "snacks",
+  gelavel: false, ativo: true, image_url: null,
 };
 
 export default function Admin() {
   const navigate = useNavigate();
   const { user, loading: authLoading, isAdmin, signOut } = useAuth();
   const { toast } = useToast();
-
   const { data: products, isLoading: productsLoading } = useProducts();
   const { data: siteSettings } = useSiteSettings();
   const logo = siteSettings?.logo_url || defaultLogo;
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
-  const deleteProduct = useDeleteProduct();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isImportOpen, setIsImportOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
-  const [formData, setFormData] = useState<ProductFormData>(emptyForm);
+  const [editing, setEditing] = useState<Product | null>(null);
+  const [form, setForm] = useState<FormData>(emptyForm);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/login");
-    }
+    if (!authLoading && !user) navigate("/login");
   }, [authLoading, user, navigate]);
 
   useEffect(() => {
     if (!authLoading && user && !isAdmin) {
-      toast({
-        title: "Acesso negado",
-        description: "Você não tem permissão para acessar esta página.",
-        variant: "destructive",
-      });
+      toast({ title: "Acesso negado", variant: "destructive" });
       navigate("/");
     }
   }, [authLoading, user, isAdmin, navigate, toast]);
 
-  const filteredProducts = products?.filter((product) => {
-    const term = searchTerm.toLowerCase();
-    return (
-      product.modelo.toLowerCase().includes(term) ||
-      product.marca.toLowerCase().includes(term) ||
-      product.tipo.toLowerCase().includes(term)
-    );
+  const filtered = products?.filter((p) => {
+    const t = searchTerm.toLowerCase();
+    return p.nome.toLowerCase().includes(t) || (p.codigo ?? "").includes(t);
   });
 
-  const handleOpenCreate = () => {
-    setEditingProduct(null);
-    setFormData(emptyForm);
+  const openCreate = () => {
+    setEditing(null);
+    setForm(emptyForm);
     setIsFormOpen(true);
   };
 
-  const handleOpenEdit = (product: Product) => {
-    setEditingProduct(product);
-    setFormData({
-      modelo: product.modelo,
-      marca: product.marca,
-      tipo: product.tipo,
-      preco: product.preco != null ? product.preco.toString() : "",
-      image_url: product.image_url || null,
+  const openEdit = (p: Product) => {
+    setEditing(p);
+    setForm({
+      nome: p.nome,
+      codigo: p.codigo ?? "",
+      custo: (p.custo ?? 0).toString(),
+      categoria: p.categoria,
+      gelavel: p.gelavel,
+      ativo: p.ativo,
+      image_url: p.image_url ?? null,
     });
     setIsFormOpen(true);
   };
 
-  const handleOpenDelete = (product: Product) => {
-    setDeletingProduct(product);
-    setIsDeleteOpen(true);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const productData: ProductInsert = {
-      modelo: formData.modelo,
-      marca: formData.marca,
-      tipo: formData.tipo,
-      preco: formData.preco ? parseFloat(formData.preco.replace(",", ".")) : null,
-      image_url: formData.image_url,
+    const data: ProductInsert = {
+      nome: form.nome,
+      codigo: form.codigo || null,
+      custo: form.custo ? parseFloat(form.custo.replace(",", ".")) : 0,
+      categoria: form.categoria,
+      gelavel: form.gelavel,
+      ativo: form.ativo,
+      image_url: form.image_url,
+      preco: null,
     };
-
-    if (editingProduct) {
-      await updateProduct.mutateAsync({ id: editingProduct.id, ...productData });
+    if (editing) {
+      await updateProduct.mutateAsync({ id: editing.id, ...data });
     } else {
-      await createProduct.mutateAsync(productData);
+      await createProduct.mutateAsync(data);
     }
-
     setIsFormOpen(false);
-    setFormData(emptyForm);
-    setEditingProduct(null);
-  };
-
-  const handleDelete = async () => {
-    if (deletingProduct) {
-      await deleteProduct.mutateAsync(deletingProduct.id);
-      setIsDeleteOpen(false);
-      setDeletingProduct(null);
-    }
-  };
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/login");
+    setForm(emptyForm);
+    setEditing(null);
   };
 
   if (authLoading || !user || !isAdmin) {
@@ -187,34 +125,31 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="bg-card border-b border-border shadow-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img src={logo} alt="AR Cell" className="h-10 w-auto" />
+            <img src={logo} alt="Pronto" className="h-10 w-auto" />
             <div>
-              <h1 className="text-lg font-bold text-foreground">Painel Admin</h1>
+              <h1 className="text-lg font-bold text-foreground">Painel Pronto</h1>
               <p className="text-xs text-muted-foreground">{user.email}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => navigate("/")}>
-              <Home className="h-4 w-4 mr-2" />
-              Catálogo
+              <Home className="h-4 w-4 mr-2" />Catálogo
             </Button>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sair
+            <Button variant="ghost" size="sm" onClick={async () => { await signOut(); navigate("/login"); }}>
+              <LogOut className="h-4 w-4 mr-2" />Sair
             </Button>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
         <Tabs defaultValue="produtos">
-          <TabsList>
+          <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="produtos">Produtos</TabsTrigger>
+            <TabsTrigger value="deliveries">Deliveries</TabsTrigger>
             <TabsTrigger value="crm">CRM / Leads</TabsTrigger>
             <TabsTrigger value="config">Configurações</TabsTrigger>
           </TabsList>
@@ -232,26 +167,25 @@ export default function Admin() {
               </div>
               <div className="flex gap-2">
                 <ProductExportButton />
-                <Button variant="outline" onClick={() => setIsImportOpen(true)}>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Importar CSV
-                </Button>
-                <Button onClick={handleOpenCreate}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Novo Produto
+                <Button onClick={openCreate}>
+                  <Plus className="h-4 w-4 mr-2" />Novo Produto
                 </Button>
               </div>
             </div>
             <div className="bg-card rounded-lg border border-border overflow-hidden">
               <EditableProductTable
-                products={filteredProducts || []}
+                products={filtered || []}
                 isLoading={productsLoading}
-                onOpenCreate={handleOpenCreate}
+                onEdit={openEdit}
               />
             </div>
             <p className="text-sm text-muted-foreground">
-              {filteredProducts?.length ?? 0} produto(s) encontrado(s)
+              {filtered?.length ?? 0} produto(s)
             </p>
+          </TabsContent>
+
+          <TabsContent value="deliveries" className="mt-4">
+            <AdminDeliveries />
           </TabsContent>
 
           <TabsContent value="crm" className="mt-4">
@@ -264,131 +198,87 @@ export default function Admin() {
         </Tabs>
       </main>
 
-      {/* Product Form Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {editingProduct ? "Editar Produto" : "Novo Produto"}
-            </DialogTitle>
+            <DialogTitle>{editing ? "Editar Produto" : "Novo Produto"}</DialogTitle>
             <DialogDescription>
-              {editingProduct
-                ? "Atualize as informações do produto"
-                : "Preencha os dados para adicionar um novo produto"}
+              Preencha os dados. O preço final é calculado a partir do custo + margem global − comissão do delivery.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label>Imagem do Produto</Label>
+                <Label>Imagem</Label>
                 <ProductImageUpload
-                  currentImageUrl={formData.image_url}
-                  onImageChange={(url) => setFormData({ ...formData, image_url: url })}
+                  currentImageUrl={form.image_url}
+                  onImageChange={(url) => setForm({ ...form, image_url: url })}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="modelo">Modelo</Label>
-                <Input
-                  id="modelo"
-                  value={formData.modelo}
-                  onChange={(e) =>
-                    setFormData({ ...formData, modelo: e.target.value })
-                  }
-                  placeholder="Ex: iPhone 14 Pro"
-                  required
-                />
+                <Label htmlFor="nome">Nome *</Label>
+                <Input id="nome" value={form.nome}
+                  onChange={(e) => setForm({ ...form, nome: e.target.value })} required />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="codigo">Código de barras</Label>
+                  <Input id="codigo" value={form.codigo}
+                    onChange={(e) => setForm({ ...form, codigo: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="custo">Custo (R$) *</Label>
+                  <Input id="custo" type="text" value={form.custo}
+                    onChange={(e) => setForm({ ...form, custo: e.target.value })}
+                    placeholder="0,00" required />
+                </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="marca">Marca</Label>
-                <Input
-                  id="marca"
-                  value={formData.marca}
-                  onChange={(e) =>
-                    setFormData({ ...formData, marca: e.target.value })
-                  }
-                  placeholder="Ex: Apple"
-                  required
-                />
+                <Label>Categoria</Label>
+                <Select
+                  value={form.categoria}
+                  onValueChange={(v) => setForm({ ...form, categoria: v as Categoria })}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIAS.map((c) => (
+                      <SelectItem key={c.value} value={c.value}>
+                        {c.emoji} {c.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="tipo">Tipo</Label>
-                <Input
-                  id="tipo"
-                  value={formData.tipo}
-                  onChange={(e) =>
-                    setFormData({ ...formData, tipo: e.target.value })
-                  }
-                  placeholder="Ex: S/Aro"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="preco">Preço (R$)</Label>
-                <Input
-                  id="preco"
-                  type="text"
-                  value={formData.preco}
-                  onChange={(e) =>
-                    setFormData({ ...formData, preco: e.target.value })
-                  }
-                  placeholder="Ex: 150.00"
-                  required
-                />
+              <div className="flex items-center gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Switch
+                    checked={form.gelavel}
+                    onCheckedChange={(v) => setForm({ ...form, gelavel: v })}
+                  />
+                  <span className="text-sm">❄️ Pode ser gelado</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Switch
+                    checked={form.ativo}
+                    onCheckedChange={(v) => setForm({ ...form, ativo: v })}
+                  />
+                  <span className="text-sm">Visível no catálogo</span>
+                </label>
               </div>
             </div>
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsFormOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
                 Cancelar
               </Button>
-              <Button
-                type="submit"
-                disabled={createProduct.isPending || updateProduct.isPending}
-              >
-                {createProduct.isPending || updateProduct.isPending ? (
+              <Button type="submit" disabled={createProduct.isPending || updateProduct.isPending}>
+                {(createProduct.isPending || updateProduct.isPending) ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
-                ) : editingProduct ? (
-                  "Salvar"
-                ) : (
-                  "Adicionar"
-                )}
+                ) : editing ? "Salvar" : "Adicionar"}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir o produto "{deletingProduct?.modelo}"?
-              Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteProduct.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                "Excluir"
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Import Dialog */}
-      <ProductImportDialog open={isImportOpen} onOpenChange={setIsImportOpen} />
     </div>
   );
 }

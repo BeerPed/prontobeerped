@@ -9,36 +9,19 @@ export function ProductExportButton() {
 
   const exportToCSV = () => {
     if (!products || products.length === 0) {
-      toast({
-        title: "Sem dados",
-        description: "Não há produtos para exportar.",
-        variant: "destructive",
-      });
+      toast({ title: "Sem dados", variant: "destructive" });
       return;
     }
-
-    // CSV headers
-    const headers = ["Modelo", "Marca", "Tipo", "Preço"];
-    
-    // CSV rows
+    const headers = ["Codigo", "Nome", "Categoria", "Custo", "Gelavel"];
     const rows = products.map((p: Product) => [
-      `"${p.modelo.replace(/"/g, '""')}"`,
-      `"${p.marca.replace(/"/g, '""')}"`,
-      `"${p.tipo.replace(/"/g, '""')}"`,
-      p.preco != null ? p.preco.toFixed(2).replace(".", ",") : "",
+      `"${(p.codigo ?? "").replace(/"/g, '""')}"`,
+      `"${p.nome.replace(/"/g, '""')}"`,
+      p.categoria,
+      (p.custo ?? 0).toFixed(2).replace(".", ","),
+      p.gelavel ? "sim" : "nao",
     ]);
-
-    // Combine headers and rows
-    const csvContent = [
-      headers.join(";"),
-      ...rows.map((row) => row.join(";")),
-    ].join("\n");
-
-    // Add BOM for Excel compatibility with UTF-8
-    const BOM = "\uFEFF";
-    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
-
-    // Create download link
+    const csv = [headers.join(";"), ...rows.map((r) => r.join(";"))].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -47,20 +30,12 @@ export function ProductExportButton() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-
-    toast({
-      title: "Exportação concluída",
-      description: `${products.length} produto(s) exportado(s) para CSV.`,
-    });
+    toast({ title: "Exportação concluída", description: `${products.length} produto(s)` });
   };
 
   return (
     <Button variant="outline" onClick={exportToCSV} disabled={isLoading}>
-      {isLoading ? (
-        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-      ) : (
-        <Download className="h-4 w-4 mr-2" />
-      )}
+      {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
       Exportar CSV
     </Button>
   );
