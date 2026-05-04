@@ -2,11 +2,31 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+export type Categoria =
+  | "bebidas"
+  | "refrigerantes"
+  | "alcoolicas"
+  | "snacks"
+  | "congelados"
+  | "combos";
+
+export const CATEGORIAS: { value: Categoria; label: string; emoji: string }[] = [
+  { value: "bebidas", label: "Bebidas", emoji: "🥤" },
+  { value: "refrigerantes", label: "Refrigerantes", emoji: "🥫" },
+  { value: "alcoolicas", label: "Alcoólicas", emoji: "🍺" },
+  { value: "snacks", label: "Snacks", emoji: "🍿" },
+  { value: "congelados", label: "Congelados", emoji: "🧊" },
+  { value: "combos", label: "Combos & Mercado", emoji: "🛒" },
+];
+
 export interface Product {
   id: string;
-  modelo: string;
-  marca: string;
-  tipo: string;
+  nome: string;
+  codigo: string | null;
+  custo: number;
+  categoria: Categoria;
+  gelavel: boolean;
+  ativo: boolean;
   preco: number | null;
   image_url?: string | null;
   created_at?: string;
@@ -23,11 +43,11 @@ export function useProducts() {
       const { data, error } = await supabase
         .from("products")
         .select("*")
-        .order("marca", { ascending: true })
-        .order("modelo", { ascending: true });
+        .order("categoria", { ascending: true })
+        .order("nome", { ascending: true });
 
       if (error) throw error;
-      return data as Product[];
+      return (data ?? []) as unknown as Product[];
     },
   });
 }
@@ -40,27 +60,17 @@ export function useCreateProduct() {
     mutationFn: async (product: ProductInsert) => {
       const { data, error } = await supabase
         .from("products")
-        .insert(product)
+        .insert(product as never)
         .select()
         .single();
-
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast({
-        title: "Produto adicionado",
-        description: "O produto foi adicionado com sucesso.",
-      });
+      toast({ title: "Produto adicionado" });
     },
-    onError: (error) => {
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
+    onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
 }
 
@@ -72,28 +82,18 @@ export function useUpdateProduct() {
     mutationFn: async ({ id, ...product }: { id: string } & ProductUpdate) => {
       const { data, error } = await supabase
         .from("products")
-        .update(product)
+        .update(product as never)
         .eq("id", id)
         .select()
         .single();
-
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast({
-        title: "Produto atualizado",
-        description: "O produto foi atualizado com sucesso.",
-      });
+      toast({ title: "Produto atualizado" });
     },
-    onError: (error) => {
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
+    onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
 }
 
@@ -104,22 +104,20 @@ export function useDeleteProduct() {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("products").delete().eq("id", id);
-
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast({
-        title: "Produto removido",
-        description: "O produto foi removido com sucesso.",
-      });
+      toast({ title: "Produto removido" });
     },
-    onError: (error) => {
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
+    onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
+}
+
+/** Calcula preço final: custo com margem, ajustado pela comissão do delivery */
+export function calcPrecoFinal(custo: number, margem: number, comissao: number): number {
+  if (!custo || custo <= 0) return 0;
+  const comMargem = custo * (1 + margem / 100);
+  const comissaoFrac = Math.min(Math.max(comissao, 0), 99) / 100;
+  return comMargem / (1 - comissaoFrac);
 }

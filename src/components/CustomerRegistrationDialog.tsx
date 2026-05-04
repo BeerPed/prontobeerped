@@ -1,119 +1,84 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Send } from "lucide-react";
 import { upsertLeadByPhone } from "@/hooks/useLeads";
 
-const STORAGE_KEY = "arcell-customer-info";
+const STORAGE_KEY = "pronto-customer-info";
 
 export interface CustomerInfo {
   nome: string;
   telefone: string;
   endereco: string;
-  loja: string;
+  complemento: string;
 }
 
-interface CustomerRegistrationDialogProps {
+interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (customerInfo: CustomerInfo) => void;
 }
 
-const loadSavedCustomerInfo = (): CustomerInfo => {
+const empty: CustomerInfo = { nome: "", telefone: "", endereco: "", complemento: "" };
+
+const load = (): CustomerInfo => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      return JSON.parse(saved);
-    }
-  } catch (e) {
-    console.error("Error loading customer info:", e);
-  }
-  return { nome: "", telefone: "", endereco: "", loja: "" };
+    if (saved) return { ...empty, ...JSON.parse(saved) };
+  } catch {}
+  return empty;
 };
 
-const saveCustomerInfo = (info: CustomerInfo) => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(info));
-  } catch (e) {
-    console.error("Error saving customer info:", e);
-  }
+const save = (info: CustomerInfo) => {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(info)); } catch {}
 };
 
-export function CustomerRegistrationDialog({
-  open,
-  onOpenChange,
-  onSubmit,
-}: CustomerRegistrationDialogProps) {
-  const [customerInfo, setCustomerInfo] = useState<CustomerInfo>(loadSavedCustomerInfo);
-
+export function CustomerRegistrationDialog({ open, onOpenChange, onSubmit }: Props) {
+  const [info, setInfo] = useState<CustomerInfo>(load);
   const [errors, setErrors] = useState<Partial<CustomerInfo>>({});
 
-  useEffect(() => {
-    if (open) {
-      setCustomerInfo(loadSavedCustomerInfo());
-    }
-  }, [open]);
+  useEffect(() => { if (open) setInfo(load()); }, [open]);
 
-  const validateForm = () => {
-    const newErrors: Partial<CustomerInfo> = {};
-
-    if (!customerInfo.nome.trim()) {
-      newErrors.nome = "Nome é obrigatório";
-    }
-    if (!customerInfo.telefone.trim()) {
-      newErrors.telefone = "Telefone é obrigatório";
-    }
-    if (!customerInfo.endereco.trim()) {
-      newErrors.endereco = "Endereço é obrigatório";
-    }
-    if (!customerInfo.loja.trim()) {
-      newErrors.loja = "Nome da loja é obrigatório";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const validate = () => {
+    const e: Partial<CustomerInfo> = {};
+    if (!info.nome.trim()) e.nome = "Obrigatório";
+    if (!info.telefone.trim()) e.telefone = "Obrigatório";
+    if (!info.endereco.trim()) e.endereco = "Obrigatório";
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      saveCustomerInfo(customerInfo);
-      try {
-        await upsertLeadByPhone({
-          nome: customerInfo.nome,
-          telefone: customerInfo.telefone,
-          endereco: customerInfo.endereco,
-          loja: customerInfo.loja,
-        });
-      } catch (err) {
-        console.error("Failed to save lead", err);
-      }
-      onSubmit(customerInfo);
+    if (!validate()) return;
+    save(info);
+    try {
+      await upsertLeadByPhone({
+        nome: info.nome,
+        telefone: info.telefone,
+        endereco: info.endereco,
+        loja: info.complemento || null,
+      });
+    } catch (err) {
+      console.error("Failed to save lead", err);
     }
+    onSubmit(info);
   };
 
-  const formatPhone = (value: string): string => {
-    const digits = value.replace(/\D/g, "").slice(0, 11);
-    if (digits.length <= 2) return digits;
-    if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  const formatPhone = (v: string) => {
+    const d = v.replace(/\D/g, "").slice(0, 11);
+    if (d.length <= 2) return d;
+    if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
   };
 
-  const handleChange = (field: keyof CustomerInfo, value: string) => {
-    const formattedValue = field === "telefone" ? formatPhone(value) : value;
-    setCustomerInfo((prev) => ({ ...prev, [field]: formattedValue }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
+  const change = (f: keyof CustomerInfo, v: string) => {
+    setInfo((p) => ({ ...p, [f]: f === "telefone" ? formatPhone(v) : v }));
+    if (errors[f]) setErrors((p) => ({ ...p, [f]: undefined }));
   };
 
   return (
@@ -121,80 +86,43 @@ export function CustomerRegistrationDialog({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Dados para Entrega</DialogTitle>
-          <DialogDescription>
-            Preencha seus dados para finalizar o pedido
-          </DialogDescription>
+          <DialogDescription>Vamos chegar até você ⚡</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="nome">Nome *</Label>
-              <Input
-                id="nome"
-                placeholder="Seu nome completo"
-                value={customerInfo.nome}
-                onChange={(e) => handleChange("nome", e.target.value)}
-                className={errors.nome ? "border-destructive" : ""}
-              />
-              {errors.nome && (
-                <span className="text-xs text-destructive">{errors.nome}</span>
-              )}
+              <Input id="nome" placeholder="Seu nome" value={info.nome}
+                onChange={(e) => change("nome", e.target.value)}
+                className={errors.nome ? "border-destructive" : ""} />
+              {errors.nome && <span className="text-xs text-destructive">{errors.nome}</span>}
             </div>
-
             <div className="grid gap-2">
               <Label htmlFor="telefone">Telefone *</Label>
-              <Input
-                id="telefone"
-                placeholder="(00) 00000-0000"
-                value={customerInfo.telefone}
-                onChange={(e) => handleChange("telefone", e.target.value)}
-                className={errors.telefone ? "border-destructive" : ""}
-              />
-              {errors.telefone && (
-                <span className="text-xs text-destructive">{errors.telefone}</span>
-              )}
+              <Input id="telefone" placeholder="(00) 00000-0000" value={info.telefone}
+                onChange={(e) => change("telefone", e.target.value)}
+                className={errors.telefone ? "border-destructive" : ""} />
+              {errors.telefone && <span className="text-xs text-destructive">{errors.telefone}</span>}
             </div>
-
             <div className="grid gap-2">
               <Label htmlFor="endereco">Endereço *</Label>
-              <Input
-                id="endereco"
-                placeholder="Rua, número, bairro, cidade"
-                value={customerInfo.endereco}
-                onChange={(e) => handleChange("endereco", e.target.value)}
-                className={errors.endereco ? "border-destructive" : ""}
-              />
-              {errors.endereco && (
-                <span className="text-xs text-destructive">{errors.endereco}</span>
-              )}
+              <Input id="endereco" placeholder="Rua, número, bairro" value={info.endereco}
+                onChange={(e) => change("endereco", e.target.value)}
+                className={errors.endereco ? "border-destructive" : ""} />
+              {errors.endereco && <span className="text-xs text-destructive">{errors.endereco}</span>}
             </div>
-
             <div className="grid gap-2">
-              <Label htmlFor="loja">Nome da Loja *</Label>
-              <Input
-                id="loja"
-                placeholder="Nome da sua loja"
-                value={customerInfo.loja}
-                onChange={(e) => handleChange("loja", e.target.value)}
-                className={errors.loja ? "border-destructive" : ""}
-              />
-              {errors.loja && (
-                <span className="text-xs text-destructive">{errors.loja}</span>
-              )}
+              <Label htmlFor="complemento">Complemento (opcional)</Label>
+              <Input id="complemento" placeholder="Apto, bloco, referência" value={info.complemento}
+                onChange={(e) => change("complemento", e.target.value)} />
             </div>
           </div>
-
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
             <Button type="submit" className="gap-2 bg-green-600 hover:bg-green-700">
-              <Send className="h-4 w-4" />
-              Enviar Pedido
+              <Send className="h-4 w-4" /> Enviar Pedido
             </Button>
           </DialogFooter>
         </form>

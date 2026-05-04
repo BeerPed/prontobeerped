@@ -3,7 +3,7 @@ import { Download, Smartphone, Share, MoreVertical, Check, ArrowLeft } from "luc
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo-pronto.png";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;

@@ -18,70 +18,70 @@
 
 @layer base {
   :root {
-    --background: 0 0% 96%;
-    --foreground: 0 0% 9%;
+    --background: 280 20% 98%;
+    --foreground: 270 30% 12%;
 
-    --card: 0 0% 98%;
-    --card-foreground: 0 0% 9%;
+    --card: 0 0% 100%;
+    --card-foreground: 270 30% 12%;
 
-    --popover: 0 0% 89%;
-    --popover-foreground: 0 0% 9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 270 30% 12%;
 
-    --primary: 20 90% 48%;
-    --primary-foreground: 33 100% 96%;
+    --primary: 280 75% 45%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 32%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 320 75% 60%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 63%;
-    --muted-foreground: 0 0% 9%;
+    --muted: 280 15% 94%;
+    --muted-foreground: 270 10% 40%;
 
-    --accent: 47 100% 96%;
-    --accent-foreground: 37 92% 50%;
+    --accent: 320 90% 95%;
+    --accent-foreground: 280 75% 35%;
 
     --destructive: 0 72% 50%;
-    --destructive-foreground: 0 85% 97%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 83%;
-    --input: 0 0% 83%;
-    --ring: 20 90% 48%;
+    --border: 280 20% 88%;
+    --input: 280 20% 88%;
+    --ring: 280 75% 45%;
 
-    --radius: 0.75rem;
+    --radius: 0.875rem;
 
     /* Custom tokens */
-    --table-header: 222 47% 11%;
+    --table-header: 280 70% 35%;
     --table-header-foreground: 0 0% 100%;
-    --table-row-hover: 217 91% 97%;
-    --table-row-alt: 210 40% 98%;
+    --table-row-hover: 280 50% 96%;
+    --table-row-alt: 280 30% 98%;
     --success: 142 76% 36%;
     --warning: 38 92% 50%;
     --info: 199 89% 48%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 9%;
-    --sidebar-primary: 20 90% 48%;
-    --sidebar-primary-foreground: 33 100% 96%;
-    --sidebar-accent: 0 0% 32%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 83%;
-    --sidebar-ring: 20 90% 48%;
-    --chart-1: 27 95% 60%;
-    --chart-2: 43 96% 56%;
-    --chart-3: 47 95% 53%;
-    --chart-4: 24 94% 53%;
-    --chart-5: 0 0% 45%;
-    --sidebar: 0 0% 98%;
-    --font-sans: 'Roboto', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-    --font-serif: 'Libre Caslon Text', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-    --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 270 30% 12%;
+    --sidebar-primary: 280 75% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 320 75% 60%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 280 20% 88%;
+    --sidebar-ring: 280 75% 45%;
+    --chart-1: 280 75% 55%;
+    --chart-2: 320 75% 60%;
+    --chart-3: 260 70% 50%;
+    --chart-4: 340 80% 60%;
+    --chart-5: 200 70% 50%;
+    --sidebar: 0 0% 100%;
+    --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-serif: 'Libre Caslon Text', ui-serif, Georgia, serif;
+    --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, monospace;
+    --shadow-2xs: 0 1px 3px 0px hsl(280 50% 30% / 0.05);
+    --shadow-xs: 0 1px 3px 0px hsl(280 50% 30% / 0.05);
+    --shadow-sm: 0 1px 3px 0px hsl(280 50% 30% / 0.1), 0 1px 2px -1px hsl(280 50% 30% / 0.1);
+    --shadow: 0 1px 3px 0px hsl(280 50% 30% / 0.1), 0 1px 2px -1px hsl(280 50% 30% / 0.1);
+    --shadow-md: 0 1px 3px 0px hsl(280 50% 30% / 0.1), 0 2px 4px -1px hsl(280 50% 30% / 0.1);
+    --shadow-lg: 0 1px 3px 0px hsl(280 50% 30% / 0.1), 0 4px 6px -1px hsl(280 50% 30% / 0.1);
+    --shadow-xl: 0 1px 3px 0px hsl(280 50% 30% / 0.1), 0 8px 10px -1px hsl(280 50% 30% / 0.1);
+    --shadow-2xl: 0 1px 3px 0px hsl(280 50% 30% / 0.25);
     --tracking-normal: 0em;
     --spacing: 0.25rem;
   }

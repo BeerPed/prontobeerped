@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      deliveries: {
+        Row: {
+          ativo: boolean
+          comissao: number
+          cor: string | null
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          comissao?: number
+          cor?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          comissao?: number
+          cor?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           created_at: string
@@ -64,33 +94,42 @@ export type Database = {
       }
       products: {
         Row: {
+          ativo: boolean
+          categoria: string
+          codigo: string | null
           created_at: string | null
+          custo: number | null
+          gelavel: boolean
           id: string
           image_url: string | null
-          marca: string
-          modelo: string
+          nome: string
           preco: number | null
-          tipo: string
           updated_at: string | null
         }
         Insert: {
+          ativo?: boolean
+          categoria?: string
+          codigo?: string | null
           created_at?: string | null
+          custo?: number | null
+          gelavel?: boolean
           id?: string
           image_url?: string | null
-          marca: string
-          modelo: string
+          nome?: string
           preco?: number | null
-          tipo: string
           updated_at?: string | null
         }
         Update: {
+          ativo?: boolean
+          categoria?: string
+          codigo?: string | null
           created_at?: string | null
+          custo?: number | null
+          gelavel?: boolean
           id?: string
           image_url?: string | null
-          marca?: string
-          modelo?: string
+          nome?: string
           preco?: number | null
-          tipo?: string
           updated_at?: string | null
         }
         Relationships: []
@@ -100,18 +139,21 @@ export type Database = {
           id: string
           login_bg_url: string | null
           logo_url: string | null
+          margem_padrao: number
           updated_at: string
         }
         Insert: {
           id?: string
           login_bg_url?: string | null
           logo_url?: string | null
+          margem_padrao?: number
           updated_at?: string
         }
         Update: {
           id?: string
           login_bg_url?: string | null
           logo_url?: string | null
+          margem_padrao?: number
           updated_at?: string
         }
         Relationships: []
