@@ -149,6 +149,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      record_order_for_lead: {
+        Args: { _itens: Json; _telefone: string; _total: number }
+        Returns: undefined
+      }
+      upsert_lead_by_phone: {
+        Args: {
+          _endereco?: string
+          _loja?: string
+          _nome: string
+          _telefone: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "user"
