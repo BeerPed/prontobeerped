@@ -2,8 +2,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProductTable } from "@/components/ProductTable";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
-import logo from "@/assets/logo.png";
-import logoWatermark from "@/assets/logo-watermark.png";
+import logoWatermark from "@/assets/logo-pronto.png";
 
 const Index = () => {
   return (
