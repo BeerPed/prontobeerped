@@ -56,35 +56,14 @@ export async function upsertLeadByPhone(input: {
   endereco?: string | null;
   loja?: string | null;
 }) {
-  const { data: existing } = await supabase
-    .from("leads")
-    .select("id, total_pedidos")
-    .eq("telefone", input.telefone)
-    .maybeSingle();
-
-  if (existing) {
-    await supabase
-      .from("leads")
-      .update({
-        nome: input.nome,
-        endereco: input.endereco ?? null,
-        loja: input.loja ?? null,
-      })
-      .eq("id", existing.id);
-    return existing.id;
-  }
-  const { data, error } = await supabase
-    .from("leads")
-    .insert({
-      nome: input.nome,
-      telefone: input.telefone,
-      endereco: input.endereco ?? null,
-      loja: input.loja ?? null,
-    })
-    .select("id")
-    .single();
+  const { data, error } = await supabase.rpc("upsert_lead_by_phone", {
+    _nome: input.nome,
+    _telefone: input.telefone,
+    _endereco: input.endereco ?? null,
+    _loja: input.loja ?? null,
+  });
   if (error) throw error;
-  return data.id;
+  return data as string;
 }
 
 /** Record an order against an existing lead (by phone). */
@@ -92,19 +71,10 @@ export async function recordOrderForLead(
   telefone: string,
   order: { total: number; itens: unknown }
 ) {
-  const { data: existing } = await supabase
-    .from("leads")
-    .select("id, total_pedidos")
-    .eq("telefone", telefone)
-    .maybeSingle();
-  if (!existing) return;
-  await supabase
-    .from("leads")
-    .update({
-      ultimo_pedido_at: new Date().toISOString(),
-      ultimo_pedido_total: order.total,
-      ultimo_pedido_itens: order.itens as never,
-      total_pedidos: (existing.total_pedidos ?? 0) + 1,
-    })
-    .eq("id", existing.id);
+  const { error } = await supabase.rpc("record_order_for_lead", {
+    _telefone: telefone,
+    _total: order.total,
+    _itens: order.itens as never,
+  });
+  if (error) console.error("record_order_for_lead failed", error);
 }
