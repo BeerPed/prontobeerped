@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment (chaves de API — nao commitar)
+.env
+.env.*
+!.env.example
+
+# Scripts temporarios
+*.cjs
+check_tables.*
