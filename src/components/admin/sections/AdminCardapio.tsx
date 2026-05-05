@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
 import { Download, Eye } from "lucide-react";
-import { useProducts, CATEGORIAS, calcPrecoFinal } from "@/hooks/useProducts";
+import { useProducts, CATEGORIAS } from "@/hooks/useProducts";
 import { useDeliveries } from "@/hooks/useDeliveries";
 import { useAllProductDeliveries } from "@/hooks/useProductDeliveries";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { calcPrecoERP, calcLucroERP } from "@/hooks/usePrecificacao";
 import * as XLSX from "xlsx";
 
 export function AdminCardapio() {
@@ -23,12 +24,17 @@ export function AdminCardapio() {
     return products
       .filter(p => p.ativo)
       .map(p => {
-        const pd = pdAll.find(x => x.product_id === p.id && x.delivery_id === deliveryId);
-        const ativo = pd?.ativo ?? false;
-        const margem = pd?.margem ?? margemPadrao;
-        const taxa = (selectedDelivery as any)?.taxa_fixa ?? 0;
-        const preco = calcPrecoFinal(p.custo ?? 0, margem, selectedDelivery?.comissao ?? 0) + taxa;
-        return { ...p, preco, ativo };
+        const pd       = pdAll.find(x => x.product_id === p.id && x.delivery_id === deliveryId);
+        const ativo    = pd?.ativo ?? false;
+        const margemPct = pd?.margem ?? margemPadrao;
+        const taxa     = (selectedDelivery as any)?.taxa_fixa ?? 0;
+        const comissao = (selectedDelivery?.comissao ?? 0) / 100;
+        const margem   = margemPct / 100;
+        const custo    = p.custo ?? 0;
+        // Fórmula ERP: preco = (custo + taxa_fixa) / (1 - comissao - margem)
+        const preco    = calcPrecoERP(custo, taxa, comissao, margem);
+        const lucro    = calcLucroERP(custo, taxa, preco);
+        return { ...p, preco, lucro, ativo };
       })
       .filter(p => p.ativo);
   }, [deliveryId, products, pdAll, selectedDelivery, margemPadrao]);

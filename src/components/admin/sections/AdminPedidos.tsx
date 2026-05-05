@@ -4,6 +4,7 @@ import { useOrders, useCreateOrder, useUpdateOrderStatus, useDeleteOrder,
   ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, type OrderStatus, type OrderItem } from "@/hooks/useOrders";
 import { useDeliveries } from "@/hooks/useDeliveries";
 import { useProducts } from "@/hooks/useProducts";
+import { upsertLeadByPhone, recordOrderForLead } from "@/hooks/useLeads";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const ALL_STATUSES: OrderStatus[] = ["pendente","confirmado","preparando","pronto","saiu_entrega","entregue","cancelado"];
@@ -40,6 +41,8 @@ export function AdminPedidos() {
     }).filter(it => it.product_id);
     const valor_total = itens.reduce((s, it) => s + it.preco_unitario * it.quantidade, 0);
     const lucro_estimado = itens.reduce((s, it) => s + ((it.preco_unitario - (it.custo_unitario ?? 0)) * it.quantidade), 0);
+    
+    // 1. Criar pedido
     await createOrder.mutateAsync({
       cliente_nome: form.cliente_nome,
       cliente_telefone: form.cliente_telefone || null,
@@ -48,6 +51,19 @@ export function AdminPedidos() {
       status: "pendente", valor_total, lucro_estimado, itens,
       external_id: null,
     });
+
+    // 2. Auto-cadastro CRM (se tiver telefone)
+    if (form.cliente_telefone) {
+      try {
+        await upsertLeadByPhone({
+          nome: form.cliente_nome || "Sem Nome",
+          telefone: form.cliente_telefone,
+        });
+        await recordOrderForLead(form.cliente_telefone, { total: valor_total, itens });
+      } catch (err) {
+        console.error("Erro ao salvar no CRM:", err);
+      }
+    }
     setNewOpen(false);
     setForm({ cliente_nome: "", cliente_telefone: "", delivery_id: "", observacao: "", items: [] });
   };

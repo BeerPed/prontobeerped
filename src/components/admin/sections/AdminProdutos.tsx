@@ -10,7 +10,7 @@ import { useProducts, useCreateProduct, useUpdateProduct, CATEGORIAS, type Produ
 import { useDeliveries } from "@/hooks/useDeliveries";
 import { useAllProductDeliveries, useToggleProductDelivery } from "@/hooks/useProductDeliveries";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
-import { useUpsertFinanceiro } from "@/hooks/useFinanceiro";
+import { useFinanceiro, useUpsertFinanceiro } from "@/hooks/useFinanceiro";
 import { calcPrecoERP, calcLucroERP } from "@/hooks/usePrecificacao";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
@@ -134,6 +134,7 @@ export function AdminProdutos() {
   const { data: deliveries = [] } = useDeliveries();
   const { data: pdAll = [] } = useAllProductDeliveries();
   const { data: settings } = useSiteSettings();
+  const { data: financeiro = [] } = useFinanceiro();
   const margemPadrao = (settings as any)?.margem_padrao ?? 30;
   const createProduct  = useCreateProduct();
   const updateProduct  = useUpdateProduct();
@@ -158,6 +159,21 @@ export function AdminProdutos() {
     setEditing(p);
     setForm({ nome: p.nome, codigo: p.codigo ?? "", custo: (p.custo ?? 0).toString(), categoria: p.categoria, gelavel: p.gelavel, ativo: p.ativo, image_url: p.image_url ?? null });
     setIsFormOpen(true);
+  };
+
+  const handleCodigoChange = (val: string) => {
+    setForm(f => ({ ...f, codigo: val }));
+    const match = financeiro.find(x => x.codigo_barras === val);
+    if (match) {
+      setForm(prev => ({
+        ...prev,
+        nome: prev.nome || match.descricao,
+        custo: match.custo.toString(),
+      }));
+      if (!editing) {
+        toast({ title: "Código encontrado!", description: "Dados preenchidos via Financeiro." });
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -290,7 +306,7 @@ export function AdminProdutos() {
               </div>
               <div className="space-y-1">
                 <Label className="text-white/70">Código de barras</Label>
-                <Input value={form.codigo} onChange={e => setForm({...form, codigo: e.target.value})} className="bg-white/5 border-white/10 text-white" />
+                <Input value={form.codigo} onChange={e => handleCodigoChange(e.target.value)} className="bg-white/5 border-white/10 text-white" />
               </div>
               <div className="space-y-1">
                 <Label className="text-white/70">Custo (R$) *</Label>

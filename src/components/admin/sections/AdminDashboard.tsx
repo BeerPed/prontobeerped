@@ -1,10 +1,11 @@
 import { useMemo } from "react";
-import { Package, TrendingUp, AlertTriangle, RefreshCw, DollarSign, ShoppingBag } from "lucide-react";
-import { useProducts, calcPrecoFinal } from "@/hooks/useProducts";
+import { Package, TrendingUp, AlertTriangle, RefreshCw, DollarSign, ShoppingBag, Clock } from "lucide-react";
+import { useProducts } from "@/hooks/useProducts";
 import { useDeliveries } from "@/hooks/useDeliveries";
 import { useAllProductDeliveries } from "@/hooks/useProductDeliveries";
 import { useOrders } from "@/hooks/useOrders";
-import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useFinanceiro } from "@/hooks/useFinanceiro";
+import { calcPrecoERP, calcLucroERP } from "@/hooks/usePrecificacao";
 
 function MetricCard({ icon: Icon, label, value, sub, color = "amber" }: {
   icon: any; label: string; value: string; sub?: string; color?: string;
@@ -32,36 +33,47 @@ function MetricCard({ icon: Icon, label, value, sub, color = "amber" }: {
 }
 
 export function AdminDashboard() {
-  const { data: products = [] } = useProducts();
+  const { data: products = [] }  = useProducts();
   const { data: deliveries = [] } = useDeliveries();
-  const { data: pdAll = [] } = useAllProductDeliveries();
-  const { data: orders = [] } = useOrders();
-  const { data: settings } = useSiteSettings();
-  const margemPadrao = (settings as any)?.margem_padrao ?? 30;
+  const { data: pdAll = [] }     = useAllProductDeliveries();
+  const { data: orders = [] }    = useOrders();
+  const { data: financeiro = [] } = useFinanceiro();
 
   const stats = useMemo(() => {
-    const total = products.length;
+    const total  = products.length;
     const ativos = products.filter(p => p.ativo).length;
     let comPrejuizo = 0;
     for (const p of products) {
       for (const d of deliveries) {
         const pd = pdAll.find(x => x.product_id === p.id && x.delivery_id === d.id);
         if (!pd?.ativo) continue;
-        const margem = pd?.margem ?? margemPadrao;
-        const preco = calcPrecoFinal(p.custo ?? 0, margem, d.comissao ?? 0);
-        if (preco - (p.custo ?? 0) < 0) { comPrejuizo++; break; }
+        const margem   = (pd?.margem ?? 30) / 100;
+        const comissao = (d.comissao ?? 0) / 100;
+        const taxa     = (d as any).taxa_fixa ?? 0;
+        const custo    = p.custo ?? 0;
+        const preco    = calcPrecoERP(custo, taxa, comissao, margem);
+        const lucro    = calcLucroERP(custo, taxa, preco);
+        if (lucro < 0) { comPrejuizo++; break; }
       }
     }
-    const faturamento = orders.reduce((s, o) => s + (o.valor_total ?? 0), 0);
-    const lucro = orders.reduce((s, o) => s + (o.lucro_estimado ?? 0), 0);
-    const sorted = [...products].sort((a, b) =>
-      new Date(b.updated_at ?? 0).getTime() - new Date(a.updated_at ?? 0).getTime()
-    );
-    const lastUpdate = sorted[0]?.updated_at
-      ? new Date(sorted[0].updated_at).toLocaleDateString("pt-BR") : "—";
+    const faturamento = orders
+      .filter(o => o.status !== "cancelado")
+      .reduce((s, o) => s + (o.valor_total ?? 0), 0);
+    const lucroTotal = orders
+      .filter(o => o.status !== "cancelado")
+      .reduce((s, o) => s + (o.lucro_estimado ?? 0), 0);
+    // Última atualização de custo vem do financeiro
+    const lastCusto = financeiro.length > 0
+      ? financeiro.reduce((latest, f) =>
+          new Date(f.data_atualizacao) > new Date(latest.data_atualizacao) ? f : latest
+        ).data_atualizacao
+      : null;
+    const lastUpdate = lastCusto
+      ? new Date(lastCusto).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+      : "Nunca importado";
     const emAberto = orders.filter(o => !["entregue","cancelado"].includes(o.status)).length;
-    return { total, ativos, comPrejuizo, faturamento, lucro, lastUpdate, emAberto };
-  }, [products, deliveries, pdAll, orders, margemPadrao]);
+    return { total, ativos, comPrejuizo, faturamento, lucro: lucroTotal, lastUpdate, emAberto };
+  }, [products, deliveries, pdAll, orders, financeiro]);
 
   const deliveryStats = useMemo(() =>
     deliveries.map(d => ({
@@ -77,12 +89,12 @@ export function AdminDashboard() {
         <p className="text-white/40 text-sm mt-1">Visão geral da operação</p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-        <MetricCard icon={Package}       label="Total de produtos"     value={String(stats.total)}                   sub={`${stats.ativos} ativos`}          color="amber"  />
-        <MetricCard icon={TrendingUp}    label="Faturamento total"     value={`R$ ${stats.faturamento.toFixed(2)}`}  sub="todos os pedidos"                  color="green"  />
-        <MetricCard icon={DollarSign}    label="Lucro estimado"        value={`R$ ${stats.lucro.toFixed(2)}`}        sub="baseado nos pedidos"               color="cyan"   />
-        <MetricCard icon={AlertTriangle} label="Produtos com prejuízo" value={String(stats.comPrejuizo)}             sub="em algum delivery"                 color="red"    />
-        <MetricCard icon={ShoppingBag}   label="Pedidos em aberto"     value={String(stats.emAberto)}                sub="pendente/preparando/pronto"        color="blue"   />
-        <MetricCard icon={RefreshCw}     label="Última atualização"    value={stats.lastUpdate}                      sub="de custo de produto"               color="purple" />
+        <MetricCard icon={Package}       label="Total de produtos"     value={String(stats.total)}                    sub={`${stats.ativos} ativos`}           color="amber"  />
+        <MetricCard icon={TrendingUp}    label="Faturamento (entregues)" value={`R$ ${stats.faturamento.toFixed(2)}`}  sub="excluindo cancelados"               color="green"  />
+        <MetricCard icon={DollarSign}    label="Lucro estimado"         value={`R$ ${stats.lucro.toFixed(2)}`}         sub="baseado nos pedidos"                color="cyan"   />
+        <MetricCard icon={AlertTriangle} label="Produtos com prejuízo"  value={String(stats.comPrejuizo)}              sub="em algum delivery ativo"            color={stats.comPrejuizo > 0 ? "red" : "green"} />
+        <MetricCard icon={ShoppingBag}   label="Pedidos em aberto"      value={String(stats.emAberto)}                 sub="pendente/preparando/enviado"        color="blue"   />
+        <MetricCard icon={Clock}         label="Último custo importado" value={stats.lastUpdate}                       sub="via tabela financeiro"              color="purple" />
       </div>
 
       <div>
