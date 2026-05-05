@@ -36,3 +36,21 @@ export function useUpdateSiteSettings() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["site_settings"] }),
   });
 }
+
+/** Upsert sem precisar do id — busca o singleton e atualiza */
+export function useUpsertSiteSettings() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (patch: Partial<Pick<SiteSettings, "logo_url" | "login_bg_url" | "margem_padrao">>) => {
+      const { data: existing } = await supabase.from("site_settings").select("id").limit(1).maybeSingle();
+      if (existing?.id) {
+        const { error } = await supabase.from("site_settings").update(patch as never).eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("site_settings").insert(patch as never);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["site_settings"] }),
+  });
+}
