@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Plus, Search, Upload, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Search, Upload, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +10,8 @@ import { useProducts, useCreateProduct, useUpdateProduct, CATEGORIAS, type Produ
 import { useDeliveries } from "@/hooks/useDeliveries";
 import { useAllProductDeliveries, useToggleProductDelivery } from "@/hooks/useProductDeliveries";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
-import { calcPrecoFinal } from "@/hooks/useProducts";
+import { useUpsertFinanceiro } from "@/hooks/useFinanceiro";
+import { calcPrecoERP, calcLucroERP } from "@/hooks/usePrecificacao";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
 
@@ -63,7 +64,13 @@ function ProductRow({ product, deliveries, pdMap, margemPadrao, onEdit }: {
         <td className="px-4 py-3">
           <span className="text-white/50 text-xs">{CATEGORIAS.find(c => c.value === product.categoria)?.emoji} {product.categoria}</span>
         </td>
-        <td className="px-4 py-3 text-white/70 text-sm font-mono">R$ {Number(product.custo ?? 0).toFixed(2)}</td>
+        <td className="px-4 py-3">
+          {product.custo != null && product.custo > 0 ? (
+            <span className="text-white/70 text-sm font-mono">R$ {Number(product.custo).toFixed(2)}</span>
+          ) : (
+            <span className="flex items-center gap-1 text-orange-400 text-xs"><AlertCircle className="h-3 w-3" />Sem custo</span>
+          )}
+        </td>
         <td className="px-4 py-3">
           <div className="flex flex-wrap gap-1">
             {deliveries.map(d => {
@@ -96,9 +103,13 @@ function ProductRow({ product, deliveries, pdMap, margemPadrao, onEdit }: {
                 const key = `${product.id}:${d.id}`;
                 const pd = pdMap.get(key);
                 const isAtivo = pd?.ativo ?? false;
-                const margem = pd?.margem ?? margemPadrao;
-                const preco = calcPrecoFinal(product.custo ?? 0, margem, d.comissao ?? 0);
-                const lucro = preco - (product.custo ?? 0);
+                const margem  = (pd?.margem ?? margemPadrao) / 100;
+                const comissao = (d.comissao ?? 0) / 100;
+                const taxa     = (d as any).taxa_fixa ?? 0;
+                const custo    = product.custo ?? 0;
+                // Nova fórmula ERP: preco = (custo + taxa_fixa) / (1 - comissao - margem)
+                const preco = calcPrecoERP(custo, taxa, comissao, margem);
+                const lucro = calcLucroERP(custo, taxa, preco);
                 return (
                   <div key={d.id} className={`rounded-lg border p-3 ${isAtivo ? "border-white/10 bg-white/5" : "border-white/5 bg-transparent opacity-50"}`}>
                     <p className="text-white/70 text-xs font-semibold mb-1">{d.nome}</p>
@@ -106,7 +117,7 @@ function ProductRow({ product, deliveries, pdMap, margemPadrao, onEdit }: {
                     <p className={`text-xs mt-0.5 ${lucro >= 0 ? "text-green-400" : "text-red-400"}`}>
                       Lucro: R$ {lucro.toFixed(2)}
                     </p>
-                    <p className="text-white/30 text-xs">Margem: {margem}%</p>
+                    <p className="text-white/30 text-xs">Margem: {(margem * 100).toFixed(0)}%</p>
                   </div>
                 );
               })}
@@ -124,8 +135,9 @@ export function AdminProdutos() {
   const { data: pdAll = [] } = useAllProductDeliveries();
   const { data: settings } = useSiteSettings();
   const margemPadrao = (settings as any)?.margem_padrao ?? 30;
-  const createProduct = useCreateProduct();
-  const updateProduct = useUpdateProduct();
+  const createProduct  = useCreateProduct();
+  const updateProduct  = useUpdateProduct();
+  const upsertFinanceiro = useUpsertFinanceiro();
   const { toast } = useToast();
 
   const [search, setSearch] = useState("");
@@ -170,17 +182,44 @@ export function AdminProdutos() {
         const wb = XLSX.read(ev.target?.result, { type: "binary" });
         const ws = wb.Sheets[wb.SheetNames[0]];
         const rows: any[] = XLSX.utils.sheet_to_json(ws);
-        let imported = 0;
+
+        // Separar linhas válidas
+        const financeiroBatch: { codigo_barras: string; descricao: string; custo: number }[] = [];
+        const produtosBatch: { nome: string; custo: number; codigo: string | null; categoria: Categoria }[] = [];
+
         for (const row of rows) {
-          const nome = row["nome"] || row["Nome"] || row["NOME"] || "";
-          const custo = parseFloat(String(row["custo"] || row["Custo"] || row["CUSTO"] || "0").replace(",", "."));
-          const codigo = String(row["codigo"] || row["Codigo"] || row["CODIGO"] || row["código"] || "");
+          const nome     = row["nome"] || row["Nome"] || row["NOME"] || "";
+          const custoRaw = String(row["custo"] || row["Custo"] || row["CUSTO"] || row["preco_custo"] || "0");
+          const custo    = parseFloat(custoRaw.replace(",", "."));
+          const codigo   = String(row["codigo"] || row["Codigo"] || row["CODIGO"] || row["código"] || row["codigo_barras"] || "").trim();
           const categoria = (row["categoria"] || row["Categoria"] || "snacks") as Categoria;
           if (!nome) continue;
-          await createProduct.mutateAsync({ nome, custo: isNaN(custo) ? 0 : custo, codigo: codigo || null, categoria, gelavel: false, ativo: true, image_url: null, preco: null });
+
+          // Se tem código de barras, registrar no financeiro
+          if (codigo) {
+            financeiroBatch.push({ codigo_barras: codigo, descricao: nome, custo: isNaN(custo) ? 0 : custo });
+          }
+          produtosBatch.push({ nome, custo: isNaN(custo) ? 0 : custo, codigo: codigo || null, categoria });
+        }
+
+        // 1. Upsert financeiro (fonte de custo)
+        if (financeiroBatch.length > 0) {
+          await upsertFinanceiro.mutateAsync(financeiroBatch);
+        }
+
+        // 2. Upsert produtos
+        let imported = 0;
+        for (const p of produtosBatch) {
+          await createProduct.mutateAsync({ ...p, gelavel: false, ativo: true, image_url: null, preco: null });
           imported++;
         }
-        toast({ title: `${imported} produto(s) importado(s)` });
+
+        toast({
+          title: `${imported} produto(s) importado(s)`,
+          description: financeiroBatch.length > 0
+            ? `${financeiroBatch.length} custo(s) registrado(s) em Financeiro`
+            : "Nenhum código de barras encontrado na planilha",
+        });
       } catch (err: any) {
         toast({ title: "Erro ao importar", description: err.message, variant: "destructive" });
       }
